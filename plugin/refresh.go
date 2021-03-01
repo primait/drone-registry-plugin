@@ -25,25 +25,28 @@ type Options struct {
 
 
 func defaultRefreshFunc(r *globalRegistry) error {
-	_, region := parseRegistry(r.Address)
+	registry, err := ExtractRegistry(r.Address)
+	if err != nil {
+		return err
+	}
 
 	var creds *credentials.Credentials
 	if r.Access != "" {
 		creds = credentials.NewStaticCredentials(r.Access, r.Secret, "")
 	}
 	sess := session.New(&aws.Config{
-		Region:      aws.String(region),
+		Region:      aws.String(registry.Region),
 		Credentials: creds,
 	})
 
-	options := Options{Session: sess, Config: aws.NewConfig().WithRegion(region)}
+	options := Options{Session: sess, Config: aws.NewConfig().WithRegion(registry.Region)}
 	publicConfig := options.Config.Copy().WithRegion("us-east-1")
 	defaultClient := &defaultClient{
 		ecrClient:       ecr.New(options.Session, options.Config),
 		ecrPublicClient: ecrpublic.New(options.Session, publicConfig),
 	}
 
-	auth, err := defaultClient.getAuthorizationToken(r.Address)
+	auth, err := defaultClient.GetCredentials(r.Address)
 
 	if err != nil {
 		return err
@@ -51,7 +54,7 @@ func defaultRefreshFunc(r *globalRegistry) error {
 
 	r.Lock()
 	r.Username = auth.Username
-	r.Password = auth.Username
+	r.Password = auth.Password
 	r.expiry = time.Now().Add(time.Hour)
 	r.Unlock()
 

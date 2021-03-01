@@ -21,10 +21,10 @@ var (
 )
 
 func Test_refresh(t *testing.T) {
-	if testAccess == "" || testSecret == "" || testRegistry == "" {
-		t.SkipNow()
-		return
-	}
+	// if testAccess == "" || testSecret == "" || testRegistry == "" {
+	// 	t.SkipNow()
+	// 	return
+	// }
 
 	r := &globalRegistry{
 		Address: testRegistry,

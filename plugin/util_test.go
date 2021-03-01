@@ -27,26 +27,6 @@ func Test_convertRegistry(t *testing.T) {
 	}
 }
 
-func Test_parseRegistry(t *testing.T) {
-	tests := []struct {
-		registry string
-		account  string
-		region   string
-	}{
-		{"123456789.dkr.ecr.us-east-1.amazonaws.com", "123456789", "us-east-1"},
-		{"123456789.foo.bar.us-east-1.amazonaws.com", "", ""},
-	}
-	for _, test := range tests {
-		account, region := parseRegistry(test.registry)
-		if got, want := account, test.account; got != want {
-			t.Errorf("Want account %q, got %q", want, got)
-		}
-		if got, want := region, test.region; got != want {
-			t.Errorf("Want region %q, got %q", want, got)
-		}
-	}
-}
-
 func Test_parseToken(t *testing.T) {
 	tests := []struct {
 		token    string

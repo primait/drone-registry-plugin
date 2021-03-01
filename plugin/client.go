@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,8 +19,6 @@ const (
 	ecrPublicName       = "public.ecr.aws"
 	ecrPublicEndpoint   = proxyEndpointScheme + ecrPublicName
 )
-
-var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?$`)
 
 type Service string
 
@@ -91,7 +88,7 @@ func ExtractRegistry(input string) (*Registry, error) {
 			Service: ServiceECRPublic,
 		}, nil
 	}
-	matches := ecrPattern.FindStringSubmatch(serverURL.Hostname())
+	matches := urlPattern.FindStringSubmatch(serverURL.Hostname())
 	if len(matches) == 0 {
 		return nil, fmt.Errorf(programName + " can only be used with Amazon Elastic Container Registry.")
 	} else if len(matches) < 3 {

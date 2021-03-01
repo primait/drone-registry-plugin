@@ -5,14 +5,9 @@
 package plugin
 
 import (
-	"regexp"
 	"sync"
 	"time"
 )
-
-// regexp pattern used to match an ecr registry uri
-var reRegistry = regexp.MustCompile("(.+).dkr.ecr.(.+).amazonaws.com")
-
 type globalRegistry struct {
 	sync.Mutex
 
@@ -34,7 +29,7 @@ type globalRegistry struct {
 
 // expires returns true if the registry credentials can expire.
 func (r *globalRegistry) expires() bool {
-	return reRegistry.MatchString(r.Address)
+	return urlPattern.MatchString(r.Address)
 }
 
 // expired returns true if the registry credentials are expired.

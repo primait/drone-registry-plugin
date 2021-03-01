@@ -6,10 +6,13 @@ package plugin
 
 import (
 	"encoding/base64"
+	"regexp"
 	"strings"
 
 	"github.com/drone/drone-go/drone"
 )
+
+var urlPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?$`)
 
 // helper function converts from the internal registry representation
 // to the format registry required by the drone server.
@@ -23,17 +26,6 @@ func convertRegistry(from *globalRegistry) *drone.Registry {
 		Email:    from.Email,
 		Token:    from.Token,
 	}
-}
-
-// helper function parses the aws registry and returns the
-// account number and region.
-func parseRegistry(s string) (account, region string) {
-	matches := reRegistry.FindStringSubmatch(s)
-	if len(matches) == 3 {
-		account = matches[1]
-		region = matches[2]
-	}
-	return
 }
 
 // helper function parses the aws registry authentication token

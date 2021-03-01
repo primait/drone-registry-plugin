@@ -4,7 +4,6 @@
 
 package plugin
 
-
 import (
 	"time"
 
@@ -12,13 +11,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecrpublic"
 )
 
 // refreshFunc refreshes an ecr registry username and password.
 type refreshFunc func(registry *globalRegistry) error
 
+type Options struct {
+	Session  *session.Session
+	Config   *aws.Config
+	CacheDir string
+}
+
+
 func defaultRefreshFunc(r *globalRegistry) error {
-	account, region := parseRegistry(r.Address)
+	_, region := parseRegistry(r.Address)
 
 	var creds *credentials.Credentials
 	if r.Access != "" {
@@ -29,29 +36,22 @@ func defaultRefreshFunc(r *globalRegistry) error {
 		Credentials: creds,
 	})
 
-	service := ecr.New(sess, aws.NewConfig().WithRegion(region))
-
-	params := &ecr.GetAuthorizationTokenInput{
-		RegistryIds: []*string{&account},
+	options := Options{Session: sess, Config: aws.NewConfig().WithRegion(region)}
+	publicConfig := options.Config.Copy().WithRegion("us-east-1")
+	defaultClient := &defaultClient{
+		ecrClient:       ecr.New(options.Session, options.Config),
+		ecrPublicClient: ecrpublic.New(options.Session, publicConfig),
 	}
 
-	resp, err := service.GetAuthorizationToken(params)
-	if err != nil {
-		return err
-	}
+	auth, err := defaultClient.getAuthorizationToken(r.Address)
 
-	if len(resp.AuthorizationData) == 0 {
-		return nil
-	}
-
-	user, pass, err := parseToken(*resp.AuthorizationData[0].AuthorizationToken)
 	if err != nil {
 		return err
 	}
 
 	r.Lock()
-	r.Username = user
-	r.Password = pass
+	r.Username = auth.Username
+	r.Password = auth.Username
 	r.expiry = time.Now().Add(time.Hour)
 	r.Unlock()
 
